@@ -33,6 +33,9 @@ using namespace app;
 	using MeetingHud = GPOHFPAIEMA;
 	using InnerNetClient = DNAFMCDBMCI;
 	using InnerNet_DisconnectReasons__Enum = NCBONGGBCNE__Enum;
+	using ShipStatus = DAFPFFMKPJJ;
+	using SystemTypes__Enum = JBPEMAACAEP__Enum;
+	SystemTypes__Enum SystemTypes__Enum_Comms = JBPEMAACAEP__Enum_Comms;
 	InnerNetClient_GameState__Enum InnerNetClient_GameState__Enum_Joined = DNAFMCDBMCI_JPCEFDHGHAK__Enum_Joined;
 	InnerNetClient_GameState__Enum InnerNetClient_GameState__Enum_Ended = DNAFMCDBMCI_JPCEFDHGHAK__Enum_Ended;
 	#define PlayerControl_FixedUpdate_Trampoline GLHCHLEDNBA_FixedUpdate
@@ -42,7 +45,10 @@ using namespace app;
 	#define MeetingHud_Start_Trampoline GPOHFPAIEMA_Start
 	#define InnerNetClient_FixedUpdate_Trampoline DNAFMCDBMCI_FixedUpdate
 	#define InnerNetClient_Disconnect_Trampoline DNAFMCDBMCI_GPKBCOKMFHK
+	#define ShipStatus_RepairSystem_Trampoline DAFPFFMKPJJ_RepairSystem
+	#define ShipStatus_RpcRepairSystem_Trampoline DAFPFFMKPJJ_RpcRepairSystem
 #elif GAME_VERSION == GAME_VERSION_2020_11_4s
+	//TODO add new functions
 	#define version_text "2020.11.4s"
 	using InnerNetClient_GameState__Enum = DBDDAJAICFN_DKEKFCCGGEO__Enum;
 	using PlayerControl = APNNOJFGDGP;

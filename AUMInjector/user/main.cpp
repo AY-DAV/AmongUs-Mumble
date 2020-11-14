@@ -15,7 +15,7 @@
 #include "LoggingSystem.h"
 #include <chrono>
 #include <thread>
-//#include "dynamic_analysis.h"
+#include "dynamic_analysis.h"
 
 using namespace app;
 
@@ -61,9 +61,9 @@ void PlayerControl_FixedUpdate_Hook(PlayerControl* __this, MethodInfo* method)
     if (__this->fields.LightPrefab != nullptr && sendPosition)
     {
         // Cache position
-        Vector2 pos = PlayerControl_GetTruePosition_Trampoline(__this, method);
-        posCache[0] = pos.x;
-        posCache[1] = pos.y;
+Vector2 pos = PlayerControl_GetTruePosition_Trampoline(__this, method);
+posCache[0] = pos.x;
+posCache[1] = pos.y;
     }
 }
 
@@ -104,9 +104,9 @@ void InnerNetClient_FixedUpdate_Hook(InnerNetClient* __this, MethodInfo* method)
 
     // Check if game state changed to lobby
     if (__this->fields.GameState != lastGameState &&
-            (__this->fields.GameState == InnerNetClient_GameState__Enum_Joined ||
+        (__this->fields.GameState == InnerNetClient_GameState__Enum_Joined ||
             __this->fields.GameState == InnerNetClient_GameState__Enum_Ended)
-       )
+        )
     {
         sendPosition = true;
         logger.Log(LOG_CODE::MSG, "Game joined or ended");
@@ -143,11 +143,12 @@ void InnerNetClient_FixedUpdate_Hook(InnerNetClient* __this, MethodInfo* method)
             // Reset cached position for logging
             posCache[0] = 0.0f;
             posCache[1] = 0.0f;
-		}
-	}
+        }
+    }
     TryLogPosition(mumbleLink.linkedMem != nullptr);
 }
 
+// Gets called when the client disconencts for whatsever reason
 void InnerNetClient_Disconnect_Hook(InnerNetClient* __this, InnerNet_DisconnectReasons__Enum reason, String* stringReason, MethodInfo* method)
 {
     InnerNetClient_Disconnect_Trampoline(__this, reason, stringReason, method);
@@ -156,6 +157,29 @@ void InnerNetClient_Disconnect_Hook(InnerNetClient* __this, InnerNet_DisconnectR
     mumbleLink.Mute(false);
     posCache[0] = 0.0f;
     posCache[1] = 0.0f;
+}
+
+// Gets called when a system is sabotaged or repaired
+void ShipStatus_RepairSystem_Hook(ShipStatus* __this, SystemTypes__Enum systemType, PlayerControl* player, uint8_t amount, MethodInfo* method)
+{
+    ShipStatus_RepairSystem_Trampoline(__this, systemType, player, amount, method);
+
+    logger.LogVariadic(LOG_CODE::MSG, false, "Sabotage or repair: %d, %d", systemType, amount);
+    if (systemType == SystemTypes__Enum_Comms)
+    {
+        logger.LogVariadic(LOG_CODE::MSG, false, "Sabotage or repair comms, %d", amount);
+    }
+}
+
+void ShipStatus_RpcRepairSystem_Hook(ShipStatus* __this, SystemTypes__Enum systemType, int32_t amount, MethodInfo* method)
+{
+    ShipStatus_RpcRepairSystem_Trampoline(__this, systemType, amount, method);
+
+    logger.LogVariadic(LOG_CODE::MSG, false, "RPC Sabotage or repair: %d, %d", systemType, amount);
+    if (systemType == SystemTypes__Enum_Comms)
+    {
+        logger.LogVariadic(LOG_CODE::MSG, false, "RPC Sabotage or repair comms, %d", amount);
+    }
 }
 
 // Entrypoint of the injected thread
@@ -216,8 +240,10 @@ void Run()
 		DetourAttach(&(PVOID&)MeetingHud_Start_Trampoline, MeetingHud_Start_Hook);
 		DetourAttach(&(PVOID&)InnerNetClient_FixedUpdate_Trampoline, InnerNetClient_FixedUpdate_Hook);
 		DetourAttach(&(PVOID&)InnerNetClient_Disconnect_Trampoline, InnerNetClient_Disconnect_Hook);
+        DetourAttach(&(PVOID&)ShipStatus_RepairSystem_Trampoline, ShipStatus_RepairSystem_Hook);
+        DetourAttach(&(PVOID&)ShipStatus_RpcRepairSystem_Trampoline, ShipStatus_RpcRepairSystem_Hook);
 
-		//dynamic_analysis_attach();
+		dynamic_analysis_attach();
 		LONG errDetour = DetourTransactionCommit();
 		if (errDetour == NO_ERROR) logger.Log(LOG_CODE::INF, "Successfully detoured game functions");
 		else logger.LogVariadic(LOG_CODE::ERR, false, "Detouring game functions failed: %d", errDetour);
